@@ -1,12 +1,22 @@
-# Transcript CLI for Windows
+# Transcript CLI
 
 A command-line tool that splits large audio files into chunks, transcribes them using the [Soniox](https://soniox.com) API with speaker diarization, and saves the results as text files.
 
+Supports **Windows** and **Debian/Ubuntu Linux**.
+
 ---
 
-## Quick Install (One-Time Setup)
+## Prerequisites
 
-Follow these steps to install `transcript` as a permanent system command.
+Before installing, ensure you have:
+
+- **Python 3.10+**
+- **FFmpeg**
+- **Soniox API Key** - Get one free at [console.soniox.com](https://console.soniox.com/signup)
+
+---
+
+## Windows Installation
 
 ### Step 1: Install Prerequisites
 
@@ -23,26 +33,18 @@ python --version
 
 #### FFmpeg
 
-Open PowerShell and run:
 ```powershell
 winget install Gyan.FFmpeg
 ```
 
-Then **close and reopen PowerShell**.
-
-Verify:
+Restart PowerShell, then verify:
 ```powershell
 ffmpeg -version
 ```
 
-#### Soniox API Key
-
-1. Create a free account at [console.soniox.com](https://console.soniox.com/signup).
-2. Copy your API key from the dashboard.
-
 ---
 
-### Step 2: Download & Install the Script
+### Step 2: Download the Project
 
 #### Option A: Using Git
 ```powershell
@@ -55,33 +57,23 @@ git clone https://github.com/StArtinos/transcript.git C:\Tools\Transcript
 
 ---
 
-### Step 3: Set Up Python Environment
-
-Open PowerShell and run:
+### Step 3: Run the Installer
 
 ```powershell
 cd C:\Tools\Transcript
-
-# Create virtual environment
-python -m venv venv
-
-# Activate it
-venv\Scripts\Activate.ps1
-
-# Install dependencies
-pip install requests python-dotenv pydub
+.\install.bat
 ```
 
-> **Permission error?** Run this first:
-> ```powershell
-> Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-> ```
+This will:
+- Create a virtual environment
+- Install Python dependencies
+- Update `transcript.cmd` with correct paths
 
 ---
 
 ### Step 4: Configure Your API Key
 
-Create the `.env` file with your Soniox API key:
+Create the `.env` file:
 
 ```powershell
 cd C:\Tools\Transcript
@@ -94,8 +86,6 @@ Replace `your_api_key_here` with your actual key.
 
 ### Step 5: Add to System PATH
 
-This makes `transcript` available from any directory.
-
 1. Press `Win + R`, type `sysdm.cpl`, press Enter.
 2. Click **Advanced** tab → **Environment Variables**.
 3. Under **System variables**, select `Path` → click **Edit**.
@@ -104,74 +94,176 @@ This makes `transcript` available from any directory.
    C:\Tools\Transcript\transcript_bin
    ```
 5. Click **OK** on all dialogs.
-6. **Close and reopen PowerShell**.
+6. **Restart PowerShell**.
 
 ---
 
-### Step 6: Update the Batch File Path
+## Debian/Ubuntu Linux Installation
 
-Edit `C:\Tools\Transcript\transcript_bin\transcript.cmd` to match your installation:
+### Step 1: Install Prerequisites
 
-```cmd
-@echo off
-"C:\Tools\Transcript\venv\Scripts\python.exe" "C:\Tools\Transcript\transcript.py" %*
+```bash
+# Update package list
+sudo apt update
+
+# Install Python 3 and pip
+sudo apt install -y python3 python3-pip python3-venv
+
+# Install FFmpeg
+sudo apt install -y ffmpeg
+
+# Verify installations
+python3 --version
+ffmpeg -version
 ```
 
-> If you installed to a different folder, update both paths accordingly.
+---
+
+### Step 2: Download the Project
+
+#### Option A: Using Git
+```bash
+git clone https://github.com/StArtinos/transcript.git ~/Tools/Transcript
+```
+
+#### Option B: Manual Download
+```bash
+mkdir -p ~/Tools
+cd ~/Tools
+# Download and extract ZIP, then rename to Transcript
+```
+
+---
+
+### Step 3: Set Up Python Environment
+
+```bash
+cd ~/Tools/Transcript
+
+# Create virtual environment
+python3 -m venv venv
+
+# Activate it
+source venv/bin/activate
+
+# Install dependencies
+pip install requests python-dotenv pydub
+```
+
+---
+
+### Step 4: Configure Your API Key
+
+```bash
+cd ~/Tools/Transcript
+echo "SONIOX_API_KEY=your_api_key_here" > .env
+```
+
+Replace `your_api_key_here` with your actual key.
+
+---
+
+### Step 5: Create the CLI Command
+
+Create a shell script:
+
+```bash
+sudo tee /usr/local/bin/transcript > /dev/null << 'EOF'
+#!/bin/bash
+~/Tools/Transcript/venv/bin/python ~/Tools/Transcript/transcript.py "$@"
+EOF
+
+sudo chmod +x /usr/local/bin/transcript
+```
+
+> **Note:** If you installed to a different directory, update the paths in the script above.
+
+Alternatively, add an alias to your `~/.bashrc`:
+
+```bash
+echo 'alias transcript="~/Tools/Transcript/venv/bin/python ~/Tools/Transcript/transcript.py"' >> ~/.bashrc
+source ~/.bashrc
+```
 
 ---
 
 ## Usage
 
-From **any directory** in PowerShell or Command Prompt:
+From any directory:
 
+**Windows:**
 ```powershell
 transcript "C:\path\to\audio.mp3"
 ```
 
+**Linux:**
+```bash
+transcript "/path/to/audio.mp3"
+```
+
 ### What It Does
 
-1. Splits audio into 10-minute chunks → `<filename>_chunks\`
+1. Splits audio into 10-minute chunks → `<filename>_chunks/`
 2. Uploads each chunk to Soniox for transcription
-3. Saves transcripts with speaker labels → `<filename>_transcripts\`
+3. Saves transcripts with speaker labels → `<filename>_transcripts/`
 
 ### Example
 
-```powershell
-transcript "C:\Users\Me\meeting.mp3"
+```bash
+transcript ~/recordings/meeting.mp3
 ```
 
 Output:
 ```
 Splitting into 10-minute chunks...
-Created 3 chunk(s) in: C:\Users\Me\meeting_chunks
+Created 3 chunk(s) in: /home/user/recordings/meeting_chunks
 Transcribing meeting_part_000.mp3...
   Uploading meeting_part_000.mp3...
   Creating transcription...
   Waiting for transcription...
-  -> Saved transcript to C:\Users\Me\meeting_transcripts\meeting_part_000.txt
+  -> Saved transcript to /home/user/recordings/meeting_transcripts/meeting_part_000.txt
 ...
-All transcripts saved in: C:\Users\Me\meeting_transcripts
+All transcripts saved in: /home/user/recordings/meeting_transcripts
 ```
 
 ---
 
 ## Troubleshooting
 
+### Windows
+
 | Error | Solution |
 |-------|----------|
-| `'transcript' is not recognized` | Restart PowerShell. Verify `C:\Tools\Transcript\transcript_bin` is in your PATH. |
-| `'python' is not recognized` | Reinstall Python with "Add to PATH" checked. Restart PowerShell. |
+| `'transcript' is not recognized` | Restart PowerShell. Verify PATH includes `transcript_bin`. |
+| `'python' is not recognized` | Reinstall Python with "Add to PATH" checked. |
 | `Couldn't find ffmpeg` | Run `winget install Gyan.FFmpeg` and restart PowerShell. |
-| `Missing SONIOX_API_KEY` | Check `.env` exists in `C:\Tools\Transcript` with your API key. |
-| `cannot be loaded because running scripts is disabled` | Run: `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser` |
+| `Missing SONIOX_API_KEY` | Check `.env` exists with your API key. |
+| `scripts is disabled` | Run: `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser` |
+
+### Linux
+
+| Error | Solution |
+|-------|----------|
+| `transcript: command not found` | Check `/usr/local/bin/transcript` exists or reload `~/.bashrc`. |
+| `python3: command not found` | Run `sudo apt install python3`. |
+| `ffmpeg: command not found` | Run `sudo apt install ffmpeg`. |
+| `Missing SONIOX_API_KEY` | Check `.env` exists in the project directory. |
+| `Permission denied` | Run `chmod +x /usr/local/bin/transcript`. |
 
 ---
 
 ## Uninstall
 
+### Windows
 1. Remove `C:\Tools\Transcript\transcript_bin` from your system PATH.
 2. Delete the `C:\Tools\Transcript` folder.
+
+### Linux
+```bash
+sudo rm /usr/local/bin/transcript
+rm -rf ~/Tools/Transcript
+# If using alias, remove it from ~/.bashrc
+```
 
 ---
 
